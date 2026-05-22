@@ -45,6 +45,14 @@ importers:
         specifier: ^4.1.7
         version: 4.1.7(@types/node@22.19.19)(vite@8.0.14(@types/node@22.19.19))
 
+  packages/api: {}
+
+  packages/config: {}
+
+  packages/db: {}
+
+  packages/types: {}
+
   packages/utils: {}
 
 packages:
