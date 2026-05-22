@@ -36,3 +36,6 @@ coverage/
 # Supabase
 supabase/.branches
 supabase/.temp
+
+# Mobile builds (Expo dev artifacts beyond .expo)
+*.tsbuildinfo
