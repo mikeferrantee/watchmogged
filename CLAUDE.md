@@ -98,6 +98,8 @@ For any code touching auth, payments, or RLS: PR + security-review even if solo
 Critical conventions
 ESLint scoping
 Root config scopes opinionated plugins (typescript-eslint, import) to packages/**. Apps use framework presets (Next 16, Expo 56) for those plugin categories. When adding a new plugin to root config in the future: first check whether framework presets in apps/web and apps/mobile register the same plugin. If yes, scope it to packages/**/*.{ts,tsx} like the existing typescript-eslint and import blocks. If no, keep it global.
+Workspace dependency resolution
+apps/mobile uses node-linker=hoisted (apps/mobile/.npmrc) because React Native's internal architecture relies on flat node_modules. packages/* and apps/web use pnpm's default strict isolation. When adding new mobile dependencies, declare only deps the app code explicitly imports — RN internal transitives are resolved by the framework's own resolver via hoisted node_modules. When adding new packages or non-RN apps, strict resolution is the rule.
 TypeScript
 Strict mode on. No any without a comment justifying it.
 Generated types from Supabase live in /packages/db. Regenerate after every schema change with supabase gen types typescript.
