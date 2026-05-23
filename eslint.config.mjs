@@ -18,10 +18,11 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  // Type-aware lint scoped to packages/**.
-  // Apps register @typescript-eslint via their framework configs
-  // (e.g., eslint-config-next) and would conflict if root also
-  // registered the plugin globally.
+  // Type-aware lint + import-order enforcement scoped to packages/**.
+  // Apps register @typescript-eslint AND import via their framework
+  // configs (eslint-config-next, eslint-config-expo) and would conflict
+  // if root also registered these plugins globally. Framework presets
+  // also provide their own appropriate import-order conventions.
   {
     files: ['packages/**/*.{ts,tsx}'],
     extends: [...tseslint.configs.recommendedTypeChecked],
@@ -31,11 +32,8 @@ export default tseslint.config(
         tsconfigRootDir: import.meta.dirname,
       },
     },
-  },
-  {
     plugins: {
       import: importPlugin,
-      unicorn,
     },
     rules: {
       'import/order': [
@@ -45,6 +43,13 @@ export default tseslint.config(
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
+    },
+  },
+  {
+    plugins: {
+      unicorn,
+    },
+    rules: {
       'unicorn/prefer-node-protocol': 'error',
       'unicorn/prefer-includes': 'error',
       'unicorn/prefer-string-starts-ends-with': 'error',
