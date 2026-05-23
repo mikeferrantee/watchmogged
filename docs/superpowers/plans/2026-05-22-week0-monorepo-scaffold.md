@@ -16,6 +16,8 @@
 
 This plan was written 2026-05-22 against a tooling snapshot. The following deviations were approved during execution and are authoritative where they conflict with the plan body below.
 
+**Numbering note:** A9 was never authored. The sequence jumps from A8 to A10 because A10 was the next amendment we actually needed during execution (the Metro verification gap surfaced at Task 28). Preserved as-is rather than renumbered so commit timestamps stay aligned with the real order of discovery — renumbering would falsely imply A10 was written before A11/A12 within a re-indexed sequence.
+
 ### Amendment A1 — TypeScript 6.x accepted instead of TS 5.x (Task 6)
 
 Header says "TypeScript 5 strict"; spirit was "latest stable." TS 6.0.3 was current at execution time and is what landed. Strict-mode flags in `tsconfig.base.json` carry through identically; no plan body changes needed.
