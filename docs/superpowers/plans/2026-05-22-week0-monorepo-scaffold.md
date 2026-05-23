@@ -47,6 +47,14 @@ Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that refere
 
 Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
 
+### Amendment A13 — Supabase CLI 2.101.0 no longer auto-creates `supabase/seed.sql` (Task 30)
+
+Plan body's Task 30 Step 2 expects `supabase init` to scaffold `config.toml`, `seed.sql`, and `.gitignore`. Supabase CLI 2.101.0 (the Homebrew stable formula at execution time) has dropped `seed.sql` from the default scaffold — `init` now produces only `config.toml`, `.gitignore`, and `.temp/` (gitignored). We followed the plan letter (Step 2's fallback `mkdir -p` for `migrations/` and `functions/` with `.gitkeep` placeholders) and accepted the missing `seed.sql`: the plan body never references it again, nothing downstream depends on it, and CP4's full local DoD pass (`pnpm install --frozen-lockfile && pnpm typecheck && pnpm lint && pnpm test && pnpm --filter web build`) was green without it. `seed.sql` will be created on demand when the first seed data lands in Week 1+ (reference catalog seed, beta fixtures).
+
+Files landed in commit `50a9502`: `supabase/config.toml`, `supabase/.gitignore`, `supabase/functions/.gitkeep`, `supabase/migrations/.gitkeep`. No `seed.sql`. Plan body's Task 30 Step 2 "Expected" file list should be considered amended: `seed.sql` is no longer in the expected set as of CLI 2.101.0.
+
+---
+
 ### Amendment A12 — NativeWind requires `withNativeWind` in Metro config (Task 25 gap, exposed at Task 28)
 
 Plan body's Task 25 wired NativeWind via three files (`tailwind.config.js`, `babel.config.js`, `nativewind-env.d.ts`) and a side-effect CSS import in `_layout.tsx`. **It did not include the `metro.config.js` change that NativeWind v4 actually requires** — wrapping `expo/metro-config`'s `getDefaultConfig` output with `withNativeWind(config, { input: './src/global.css' })`.
