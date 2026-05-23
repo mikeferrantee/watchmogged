@@ -18,14 +18,21 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  // Type-aware lint scoped to packages/**.
+  // Apps register @typescript-eslint via their framework configs
+  // (e.g., eslint-config-next) and would conflict if root also
+  // registered the plugin globally.
   {
+    files: ['packages/**/*.{ts,tsx}'],
+    extends: [...tseslint.configs.recommendedTypeChecked],
     languageOptions: {
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
+  },
+  {
     plugins: {
       import: importPlugin,
       unicorn,
