@@ -12,6 +12,41 @@
 
 ---
 
+## Plan amendments (spec drift accumulated during execution)
+
+This plan was written 2026-05-22 against a tooling snapshot. The following deviations were approved during execution and are authoritative where they conflict with the plan body below.
+
+### Amendment A1 — TypeScript 6.x accepted instead of TS 5.x (Task 6)
+
+Header says "TypeScript 5 strict"; spirit was "latest stable." TS 6.0.3 was current at execution time and is what landed. Strict-mode flags in `tsconfig.base.json` carry through identically; no plan body changes needed.
+
+### Amendment A2 — ESLint 9.x pinned explicitly with peer-aware plugin versions (Task 6)
+
+Header says "ESLint 9 flat"; bare `pnpm add eslint` resolved to ESLint 10, which `eslint-plugin-import` doesn't yet accept as a peer. Pin all three together when installing: `eslint@^9 @eslint/js@^9 eslint-plugin-unicorn@^56`. Subsequent dispatch prompts in this plan must use explicit major pins on installs to avoid the same drift.
+
+### Amendment A3 — Next.js 16.x accepted instead of Next 15 (Task 15)
+
+Header says "Next.js 15"; `create-next-app@latest` shipped Next 16.2.6 at execution time. Spirit was "current Next.js with App Router." React 19, Tailwind v4, and ESLint 9 are all baseline in Next 16, so the stack is more coherent than backporting to 15.
+
+Implications for downstream tasks:
+- **Task 15 Step 1:** the `--no-turbopack` flag is now effectively a no-op — Next 16's `create-next-app` writes bare `next dev` / `next build` to `package.json` regardless, and Turbopack is the default. Either drop the flag from the scaffold command or leave it; it has no effect on output.
+- **Task 18:** add `turbopack: { root: path.resolve(__dirname, '../..') }` to `next.config.ts` alongside `transpilePackages`. Without it, Turbopack's workspace-root inference can pick a stray lockfile higher in the filesystem tree (observed during execution) and trigger a boot-time warning.
+- **Task 19:** self-defends at Step 1 ("if Tailwind is already ^4, skip to Step 6") and will no-op cleanly. No body changes needed — but expect this task to land as a verification-only commit, not a real upgrade.
+
+### Amendment A4 — `mkdir -p apps` is a hidden prerequisite (Task 15)
+
+The plan's `pnpm create next-app@latest apps/web` invocation assumes `apps/` already exists. Modern `create-next-app` fails with "application path is not writable" if the parent directory is missing. Run `mkdir -p apps` before the scaffold command (or in the same compound). Same applies to Task 22 for `apps/mobile`.
+
+### Amendment A5 — `apps/web/AGENTS.md` and `apps/web/CLAUDE.md` are scaffolder defaults — keep tracked (Task 15)
+
+Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that references it) warning AI agents that Next 16 has breaking changes vs. older training data. These files are useful in-repo guidance and should remain tracked. Do not delete them when staging Task 15's commit.
+
+### Amendment A6 — `*.config.ts` must be in package tsconfig includes (Task 12 → Task 14)
+
+Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
+
+---
+
 ## How to read this plan
 
 - Each task is a single concern, sized to complete and verify in ≤15-20 minutes.
