@@ -45,6 +45,45 @@ Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that refere
 
 Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
 
+### Amendment A11 — Expo SDK 54 pin for App Store Expo Go runtime constraint (Task 28)
+
+**The constraint:** Expo Go on the iOS App Store currently supports SDK 54 only. SDK 55 is pending Apple approval (no timeline). SDK 56 — what `create-expo-app@latest` shipped during Task 22 (Amendment A8) — is not available on the App Store at all. Source: Expo's 2026-05-04 changelog post "Expo Go and App Store in May 2026" at https://expo.dev/changelog/expo-go-and-app-store-may-2026.
+
+This surfaced at Task 28 (Expo Go QR scan) when the user's iPhone 15 Pro Max / iOS 18.7.8 / App Store Expo Go reported "Project is incompatible with this version of Expo Go." Re-installing from App Store didn't help — Apple is serving the SDK 54 Expo Go binary.
+
+**Options considered:**
+
+1. **TestFlight Expo Go for SDK 56** — would let user keep SDK 56 but requires TestFlight enrollment and is a beta channel.
+2. **iOS simulator only** — bypasses App Store but loses real-device verification.
+3. **`eas go` custom build** — requires Apple Developer account ($99/yr) earlier than needed.
+4. **Downgrade apps/mobile to SDK 54** — accept the runtime distribution constraint. ← chosen
+
+**Decision: option 4.** Reasons:
+- Phase 1 needs real-device testing on user's actual iPhone (CP3 verification + future Bronze verification camera testing). Simulator-only isn't enough.
+- TestFlight + eas go add account/process overhead before they're needed.
+- Week 6 of MVP scope pivots to EAS dev builds (camera + Bronze verification — requires native modules unavailable in Expo Go regardless of SDK). At that point Expo Go is no longer the test surface, and the SDK 54 pin can be lifted to whatever the current SDK is.
+- Same shape as the version-snapshot decisions in A1, A2, A3, A7, A8 (TS 6, ESLint 9, Next 16, shadcn base-nova, Expo 56) — but driven by a runtime constraint (Apple's review pipeline) rather than spec-spirit interpretation.
+
+**Source of truth for version pins:** `expo/expo` repo, `sdk-54` branch, `packages/expo/bundledNativeModules.json`. This file is the canonical list of which ecosystem package versions Expo's CI tests together with each SDK. Pinning anything else risks compatibility drift across the expo + react-native + reanimated + safe-area-context + screens + worklets matrix.
+
+**Trade-offs accepted (documented in commit `d590d2b`):**
+
+- **React Compiler default-off on mobile.** SDK 56's `babel-preset-expo` enables React Compiler by default; SDK 54's doesn't. Recovered at the Week 6 EAS pivot back to current SDK.
+- **`@expo/ui` dropped.** SDK 54's equivalent is `~0.2.0-beta.9` which is a critical-path footgun. Our code never imported it. Removed entirely from `apps/mobile/package.json` (was previously `~56.0.11`).
+- **Scaffold reference components excluded from typecheck + lint.** The SDK 56 scaffolder shipped 14 example files (`themed-text`, `themed-view`, `animated-icon`, `app-tabs`, `app-tabs.web`, `external-link`, `hint-row`, `web-badge`, `collapsible`, theme constants, color-scheme hooks, `use-theme` hook, plus the `explore.tsx` example route) that used SDK 56 APIs (`TabTrigger.Label`, `TabTrigger.Icon`, `SFSymbols7_0` strict typing, `ColorSchemeName` without null-handling). The dep web is interconnected — excluding one subdirectory leaves dangling imports — so the full reference scaffold is excluded as a unit. The files remain tracked as reference per Amendment A8, but are skipped by both tsconfig and eslint. Revisit during Week 6 EAS pivot: either fix to current SDK or delete entirely.
+- **`apps/mobile/src/app/_layout.tsx` simplified to minimal `<Stack />`.** The scaffold's `_layout.tsx` rendered the now-excluded `AppTabs` and `AnimatedSplashOverlay`. Replaced with a 5-line minimal Expo Router Stack layout — sufficient infrastructure for the hello-world plus future Phase 1 routes built from the `/design` exports.
+
+**Files changed in `d590d2b`:**
+- `apps/mobile/package.json` — version pins to SDK 54 ecosystem, `@expo/ui` removed
+- `apps/mobile/src/app/_layout.tsx` — minimal Stack root layout
+- `apps/mobile/tsconfig.json` — scaffold reference paths in `exclude`, inline comment explaining
+- `apps/mobile/eslint.config.mjs` — same scaffold reference paths in `ignores` (mirrors tsconfig)
+- `pnpm-lock.yaml` — regenerated from scratch to clear stale SDK 56 resolutions
+
+**The un-block path:** Week 6 (per IMPLEMENTATION_PLAN.md / MVP_PLAN.md): EAS dev builds replace Expo Go for camera + Bronze verification work. At that point `apps/mobile/package.json` re-upgrades to the then-current Expo SDK (likely 56+ by then, possibly 57). The scaffold reference exclusions revisit at the same time.
+
+---
+
 ### Amendment A10 — Metro verification gap + apps/mobile hoisted node_modules (Tasks 22-27, exposed at Task 28)
 
 Two lessons surfaced when Task 28's QR scan failed to bundle. The plan body did not anticipate either.
