@@ -11,5 +11,18 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
+  ],
+  // SDK 56 scaffold example code retained as reference per Amendment A8 but
+  // excluded from typecheck because the app is pinned to SDK 54 for App Store
+  // Expo Go compatibility (Amendment A11). The scaffold's example screens,
+  // components, theme hooks, and constants are interconnected — excluding only
+  // one subdirectory leaves dangling imports — so the full reference dep web
+  // is excluded as a unit. Revisit during Week 6 EAS pivot: either fix to the
+  // current SDK or delete entirely.
+  "exclude": [
+    "src/app/explore.tsx",
+    "src/components/**",
+    "src/hooks/**",
+    "src/constants/**"
   ]
 }
