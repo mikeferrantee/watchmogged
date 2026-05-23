@@ -92,8 +92,11 @@ Conventional commit format: feat:, fix:, chore:, docs:, refactor:
 One logical change per commit
 Commit after each completed superpowers cycle, not mid-cycle
 Pull requests
-For solo work: direct commits to dev branch, merge to main on milestones
-For any code touching auth, payments, or RLS: PR + security-review even if solo
+All work goes through short-lived feature branches → PR → squash-merge to main
+CI (typecheck, lint, test) must pass to merge
+Branch protection on main: require PR + CI green
+No dev or staging branches
+Code touching auth, payments, RLS, user uploads, or external integrations: security-review run on the PR before merge
 
 Critical conventions
 ESLint scoping
