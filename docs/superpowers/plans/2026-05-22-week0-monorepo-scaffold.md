@@ -45,6 +45,21 @@ Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that refere
 
 Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
 
+### Amendment A7 — shadcn ecosystem moved Radix → Base UI; "New York" style retired (Task 20)
+
+Plan said "shadcn init: New York style, Neutral base color, CSS variables: yes" with separate `shadcn add button` afterward. The modern shadcn CLI (`shadcn@^4.8.0` as of execution time) has migrated significantly:
+
+- **Primitives library:** `@base-ui/react` instead of Radix UI. Base UI is the MUI team's headless component library, designed by former Radix team members. shadcn's official direction post-2025. Every future shadcn component installed in apps/web will use Base UI primitives.
+- **Style preset:** "base-nova" — "New York" no longer exists in the CLI. The new presets ship richer token sets including sidebar, charts (5 colors), and a full radius scale.
+- **Animation library:** `tw-animate-css` replaces `tailwindcss-animate`.
+- **Color space:** oklch values (perceptually uniform, future-proof) replace hex/HSL.
+- **shadcn package:** now a runtime dep (`shadcn ^4.8.0`), not just dlx-invoked. The CLI bundles tooling that components reference.
+- **Standard cn() helper:** lands at `apps/web/src/lib/utils.ts` via `clsx + tailwind-merge` — unchanged from older shadcn pattern.
+
+**Init flag change:** modern CLI uses `--defaults --yes --no-monorepo` (preset-based) instead of the plan's positional `--style new-york --base-color neutral --css-variables`. `--defaults` includes Button as part of init — so the plan's separate `shadcn add button` step is redundant. Task 20 lands as one commit (init + Button together), not two.
+
+The full token set landed in `apps/web/src/app/globals.css` is infrastructure for Phase 1 UI work — useful artifact, not bloat.
+
 ---
 
 ## How to read this plan
