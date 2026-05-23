@@ -45,6 +45,27 @@ Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that refere
 
 Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
 
+### Amendment A10 — Metro verification gap + apps/mobile hoisted node_modules (Tasks 22-27, exposed at Task 28)
+
+Two lessons surfaced when Task 28's QR scan failed to bundle. The plan body did not anticipate either.
+
+**Lesson 1 — "Metro Ready" is not "Metro bundles":** Tasks 22, 24, 25, 26, 27 each verified `pnpm --filter mobile start` succeeded with the "Waiting on http://localhost:8081" / "Logs for your project will appear below" log lines. That output only confirms Metro's HTTP server is up and listening — bundle work happens lazily when a client requests the bundle (Expo Go scan, browser hit, or `expo export`). All five tasks reported "Metro ready" while harboring latent unresolved-module errors that only surfaced when a real client tried to load the bundle.
+
+For future Metro-touching tasks (this plan and onward), the verification standard is `pnpm exec expo export --platform <ios|web> --output-dir <tmp>` after dev server changes, or curling a specific platform's bundle endpoint with `dev=true`. Treat "dev server up" and "bundles compile" as separate gates. Next.js doesn't have this asymmetry because curling `localhost:3000` already exercises the full bundle path.
+
+**Lesson 2 — apps/mobile needs hoisted node_modules:** pnpm's default strict isolation refuses to symlink React Native's many internal transitive imports (invariant, @react-native/virtualized-lists, flow-enums-runtime, nullthrows, expo-asset, etc.) into `apps/mobile/node_modules`. RN's source code has hardcoded `require()` calls that don't go through formal `dependencies` declarations. Iterative explicit pinning of each missing transitive is unsustainable (5+ rounds during Task 27 → 28 transition, still not converging at the time of architectural pivot).
+
+Solution landed in commit `c08a222`: `apps/mobile/.npmrc` with `node-linker=hoisted`. This is Expo's officially-documented monorepo pattern. The lockfile's dep graph is unchanged; only the on-disk link layout becomes flat. packages/* and apps/web continue to resolve correctly via the hoisted root node_modules — verified via 7/7 Turbo typecheck and 7/7 lint.
+
+**Trade-off documented in CLAUDE.md (commit `6ecb275`):** apps/mobile declares only deps its own code explicitly imports; RN internal transitives resolve via hoisted node_modules. For packages or future non-RN apps, strict isolation remains the rule.
+
+**Going forward, dispatch rules updated:**
+- Metro verification = forced bundle, not "ready" log line
+- apps/mobile uses hoisted resolution; future RN-stack apps should match
+- Future Expo SDK upgrades: bump the few intentional deps in apps/mobile (expo, expo-router, etc.); RN transitives version-slave to the SDK and need no explicit tracking
+
+---
+
 ### Amendment A8 — Expo SDK 56 + scaffold layout shifts (Task 22)
 
 Plan said "Expo current stable" in the header and Task 22 captured the installed version "noted in script output." Modern `create-expo-app@latest` installs Expo SDK 56.0.3 (plan body's example showed `"expo": "~52.0.0"`). Sixth version-snapshot acceptance, same shape as A1/A2/A3/A7 — spec specified a snapshot; intent was "current Expo with Expo Router and TypeScript."
