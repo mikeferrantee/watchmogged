@@ -2,7 +2,7 @@
   "name": "watchmogged",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "pnpm@9.15.9+sha512.aARhQYk8ZvrQHAeSMRKOmvuJ74fiaR1p5NQO7iKJiClf1GghgbrlW1hBjDolO95lpQXsfF+UA+zlzDzTfc8lMQ==",
+  "packageManager": "pnpm@9.15.9",
   "engines": {
     "node": ">=22 <23"
   },
