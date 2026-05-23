@@ -45,6 +45,40 @@ Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that refere
 
 Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
 
+### Amendment A12 — NativeWind requires `withNativeWind` in Metro config (Task 25 gap, exposed at Task 28)
+
+Plan body's Task 25 wired NativeWind via three files (`tailwind.config.js`, `babel.config.js`, `nativewind-env.d.ts`) and a side-effect CSS import in `_layout.tsx`. **It did not include the `metro.config.js` change that NativeWind v4 actually requires** — wrapping `expo/metro-config`'s `getDefaultConfig` output with `withNativeWind(config, { input: './src/global.css' })`.
+
+**Symptom that exposed the gap (during Task 28 verification):**
+
+The web bundle's CSS output was 453 bytes — containing the literal text `@tailwind base;@tailwind components;@tailwind utilities;` plus the scaffold's font variables. No utility classes were generated. The styling on the WATCHMOGGED hello-world screen looked unstyled (left-aligned, no centering, no spacing). Same lesson as A10: a successful `expo export` doesn't mean the bundle is correct — it means Metro ran without erroring. The CSS pipeline's output had to be inspected directly.
+
+**Root cause:**
+
+NativeWind v4 (4.2.4 installed) requires three integration points:
+1. **Babel** — `jsxImportSource: 'nativewind'` + `nativewind/babel` preset (plan body covered this in Task 25)
+2. **Tailwind config** — content glob + `nativewind/preset` (plan body covered this in Task 25)
+3. **Metro** — `withNativeWind(config, { input })` wrapper (**plan body missed this**)
+
+The Metro wrapper registers NativeWind's CSS transformer, points Metro at `global.css` as the Tailwind input, and hooks into bundling so utility classes get generated based on what's used in source files (driven by the content glob). Without it, Tailwind's PostCSS plugin never runs — `@tailwind` directives pass through as raw text.
+
+**Fix landed in commit `5220e31`:**
+
+Two-line edit to `apps/mobile/metro.config.js` — added the `require('nativewind/metro')` import and wrapped `module.exports = withNativeWind(config, { input: './src/global.css' })`. The hoisted-node-modules wiring from Task 24 (commit `c96e81d`) is preserved unchanged.
+
+**Side effect:** NativeWind's TypeScript helper auto-edited `apps/mobile/tsconfig.json` on first run after the wrapper landed, adding `nativewind-env.d.ts` to the `include[]` array. Benign — that file already existed (created during Task 25) but wasn't explicitly listed.
+
+**Plan body's Task 25 should be considered amended:** any future NativeWind setup in additional apps (e.g., a future admin or marketing app that uses NativeWind) must include all three integration points, with the Metro wrapper being the load-bearing one for actual styling output.
+
+**Verification standard going forward (extends A10's verification gap lesson):**
+
+A successful `expo export` confirms bundling didn't error. To confirm STYLING also works:
+- Inspect the CSS output file size (a near-empty Tailwind-directive-only file means PostCSS isn't running)
+- Grep the CSS for specific utility class rules matching what your app uses (catches content-glob mismatches)
+- Both checks are mechanical, fast, and catch this entire class of bug
+
+---
+
 ### Amendment A11 — Expo SDK 54 pin for App Store Expo Go runtime constraint (Task 28)
 
 **The constraint:** Expo Go on the iOS App Store currently supports SDK 54 only. SDK 55 is pending Apple approval (no timeline). SDK 56 — what `create-expo-app@latest` shipped during Task 22 (Amendment A8) — is not available on the App Store at all. Source: Expo's 2026-05-04 changelog post "Expo Go and App Store in May 2026" at https://expo.dev/changelog/expo-go-and-app-store-may-2026.
