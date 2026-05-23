@@ -96,6 +96,8 @@ For solo work: direct commits to dev branch, merge to main on milestones
 For any code touching auth, payments, or RLS: PR + security-review even if solo
 
 Critical conventions
+ESLint scoping
+Root config scopes opinionated plugins (typescript-eslint, import) to packages/**. Apps use framework presets (Next 16, Expo 56) for those plugin categories. When adding a new plugin to root config in the future: first check whether framework presets in apps/web and apps/mobile register the same plugin. If yes, scope it to packages/**/*.{ts,tsx} like the existing typescript-eslint and import blocks. If no, keep it global.
 TypeScript
 Strict mode on. No any without a comment justifying it.
 Generated types from Supabase live in /packages/db. Regenerate after every schema change with supabase gen types typescript.
