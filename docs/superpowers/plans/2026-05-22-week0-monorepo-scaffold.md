@@ -45,6 +45,22 @@ Next 16's `create-next-app` ships an `AGENTS.md` (with a `CLAUDE.md` that refere
 
 Discovered during Task 14 verification: typescript-eslint's `projectService` rejects files outside any TypeScript program with a "not found by the project service" parse error. Every package `tsconfig.json` must include `*.config.ts` in its `include` array. Applied preemptively to all five packages in commit `6c7c386`. Future package scaffolds in this plan (or in later plans) must follow the pattern `"include": ["src/**/*", "*.config.ts"]`.
 
+### Amendment A8 — Expo SDK 56 + scaffold layout shifts (Task 22)
+
+Plan said "Expo current stable" in the header and Task 22 captured the installed version "noted in script output." Modern `create-expo-app@latest` installs Expo SDK 56.0.3 (plan body's example showed `"expo": "~52.0.0"`). Sixth version-snapshot acceptance, same shape as A1/A2/A3/A7 — spec specified a snapshot; intent was "current Expo with Expo Router and TypeScript."
+
+Concrete deltas in the scaffold output that affect downstream tasks:
+
+- **Expo Router root is `src/app/` not `app/`.** Plan body references bare `app/_layout.tsx`, `app/index.tsx`. Actual paths: `src/app/_layout.tsx`, `src/app/index.tsx`, plus an additional example screen `src/app/explore.tsx`. Affects Tasks 23 (tsconfig include paths), 25 (NativeWind `_layout.tsx` import + Tailwind config content glob), 27 (hello-world screen path).
+- **React Compiler is on by default** (similar to Next 16 default). No action needed; flagging because plan didn't anticipate.
+- **Metro boots cleanly without monorepo config.** Expo 56's default `metro.config.js` (and Expo Autolinking) handle workspace resolution. Plan's Task 24 (Metro `watchFolders` + `nodeModulesPaths`) may still be useful defensively but is no longer a hard prerequisite.
+- **Scaffolder ships AI-agent guidance files** matching the Next 16 pattern from Amendment A5: `apps/mobile/AGENTS.md`, `apps/mobile/CLAUDE.md`, plus a new `apps/mobile/.claude/settings.json`. All to be preserved as tracked artifacts.
+- **Rich default template includes example components** (`themed-text`, `themed-view`, `external-link`, `animated-icon`, `app-tabs`, `collapsible`, theme constants, color-scheme hooks). Plan's Task 27 ("hello-world screen replaces scaffold default") only replaces `src/app/index.tsx` — leave the example components in place, they're useful infrastructure.
+- **`src/global.css` already exists** in the scaffold (for NativeWind/Tailwind). Task 25 may not need to create it; check before writing.
+- **`apps/mobile/scripts/reset-project.js`** is a scaffolder helper for clearing out example template content. Useful to keep tracked, not used in Week 0.
+
+---
+
 ### Amendment A7 — shadcn ecosystem moved Radix → Base UI; "New York" style retired (Task 20)
 
 Plan said "shadcn init: New York style, Neutral base color, CSS variables: yes" with separate `shadcn add button` afterward. The modern shadcn CLI (`shadcn@^4.8.0` as of execution time) has migrated significantly:
